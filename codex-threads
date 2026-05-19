@@ -1,35 +1,33 @@
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")" && pwd)"
-NODE="/Applications/Codex.app/Contents/Resources/node"
 
-# 检查 node
-if [ ! -f "$NODE" ]; then
-  echo "Error: Codex Node.js not found at $NODE"
-  echo "If you are not running inside Codex, install Node.js first."
+# Find Node.js: try Codex bundled, then system
+if [ -f "/Applications/Codex.app/Contents/Resources/node" ]; then
+  NODE="/Applications/Codex.app/Contents/Resources/node"
+elif command -v node &>/dev/null; then
+  NODE="node"
+else
+  echo "Error: Node.js not found. Install Node.js or run inside Codex."
   exit 1
 fi
 
 case "${1:-start}" in
   start)
-    "$NODE" -e "
+    $NODE -e "
 const { spawn } = require('child_process');
 const p = spawn('$NODE', ['$DIR/server.js'], {
   detached: true, stdio: 'ignore', env: { ...process.env }
 });
 p.unref();
-console.log('PID:', p.pid);
-" && echo "✅ Codex Thread Manager Manager started at http://127.0.0.1:8964"
+" && echo "✅ Codex Thread Manager started at http://127.0.0.1:8964"
     ;;
   stop)
     lsof -ti :8964 | xargs kill 2>/dev/null && echo "🛑 Stopped" || echo "Not running"
     ;;
   status)
     PID=$(lsof -ti :8964 2>/dev/null)
-    if [ "$PID" ]; then
-      echo "✅ Running (PID: $PID) → http://127.0.0.1:8964"
-    else
-      echo "❌ Not running"
-    fi
+    if [ "$PID" ]; then echo "✅ Running (PID: $PID) → http://127.0.0.1:8964"
+    else echo "❌ Not running"; fi
     ;;
   *)
     echo "Usage: ./codex-threads {start|stop|status}"

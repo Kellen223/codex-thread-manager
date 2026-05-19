@@ -7,7 +7,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/Applications/Codex.app/Contents/Resources/node</string>
-        <string>/Users/kellen/Documents/Codex-Manager/server.js</string>
+        <string>REPLACE_WITH_FULL_PATH/server.js</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
