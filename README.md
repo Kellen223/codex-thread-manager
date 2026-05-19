@@ -31,7 +31,7 @@ cd codex-thread-manager
 ./codex-threads start
 
 # 打开浏览器
-open http://127.0.0.1:8964
+open http://127.0.0.1:8520
 
 # 停止
 ./codex-threads stop
@@ -48,7 +48,7 @@ open http://127.0.0.1:8964
 node server.js
 ```
 
-然后浏览器打开 `http://127.0.0.1:8964`。
+然后浏览器打开 `http://127.0.0.1:8520`。
 
 ### 开机自启（macOS）
 

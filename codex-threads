@@ -26,7 +26,7 @@ const p=spawn('$NODE',['$DIR/server.js'],{detached:true,stdio:'ignore',env:{...p
 p.unref();
 console.log(p.pid);
 " > "$PID_FILE" 2>/dev/null
-    echo "✅ Started at http://127.0.0.1:8964"
+    echo "✅ Started at http://127.0.0.1:8520"
     ;;
   stop)
     if [ -f "$PID_FILE" ]; then
@@ -36,7 +36,7 @@ console.log(p.pid);
     else
       # fallback: try lsof (macOS) or netstat (Windows)
       if command -v lsof &>/dev/null; then
-        PID=$(lsof -ti :8964 2>/dev/null)
+        PID=$(lsof -ti :8520 2>/dev/null)
         [ -n "$PID" ] && kill "$PID" 2>/dev/null && echo "🛑 Stopped" || echo "Not running"
       elif command -v netstat &>/dev/null; then
         echo "Use Task Manager to stop the Node process on port 8964"
@@ -47,8 +47,8 @@ console.log(p.pid);
     ;;
   status)
     if command -v lsof &>/dev/null; then
-      PID=$(lsof -ti :8964 2>/dev/null)
-      [ -n "$PID" ] && echo "✅ Running (PID: $PID) → http://127.0.0.1:8964" || echo "❌ Not running"
+      PID=$(lsof -ti :8520 2>/dev/null)
+      [ -n "$PID" ] && echo "✅ Running (PID: $PID) → http://127.0.0.1:8520" || echo "❌ Not running"
     else
       [ -f "$PID_FILE" ] && echo "✅ Running (PID: $(cat "$PID_FILE"))" || echo "❌ Not running"
     fi

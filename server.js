@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const PORT = 8964;
+const PORT = 8520;
 const DB_PATH = path.resolve(process.env.HOME || '~', '.codex/state_5.sqlite');
 const HTML_PATH = path.join(__dirname, 'index.html');
 const CODEX_DIR = path.resolve(process.env.HOME || '~', '.codex');
