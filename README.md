@@ -7,54 +7,24 @@
 
 ## 安装
 
-### 方式一：通过 Codex 安装（推荐）
-
-直接把下面这个链接发给 Codex，它会自动完成剩下的：
+把下面这个链接发给 Codex，它会自动 clone 并提示启动：
 
 ```
 https://github.com/Kellen223/codex-thread-manager
 ```
 
-### 方式二：手动安装
+clone 完后 Codex 会问你是否要运行，选择 **是**，然后浏览器打开：
 
-```bash
-git clone https://github.com/Kellen223/codex-thread-manager.git
-cd codex-thread-manager
+```
+http://127.0.0.1:8520
 ```
 
-## 使用
+就完了。
 
-### macOS（Codex 桌面环境）
-
-```bash
-# 启动
-./codex-threads start
-
-# 打开浏览器
-open http://127.0.0.1:8520
-
-# 停止
-./codex-threads stop
-
-# 查看状态
-./codex-threads status
-```
-
-### Windows / 其他环境
-
-需要先安装 Node.js（[下载](https://nodejs.org/)），然后：
+如果 Codex 没有自动提示，在终端里运行：
 
 ```bash
 node server.js
-```
-
-然后浏览器打开 `http://127.0.0.1:8520`。
-
-### 开机自启（macOS）
-
-```bash
-cp com.codex.threads.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.codex.threads.plist
 ```
 
 ## 功能
@@ -78,17 +48,6 @@ launchctl load ~/Library/LaunchAgents/com.codex.threads.plist
 | 数据库查询 | 系统 `sqlite3 -json` CLI |
 | 前端 | 单页 HTML + CSS + JS，无框架 |
 | 外部依赖 | **零** |
-
-## 项目文件
-
-```
-├── server.js          # HTTP 服务
-├── index.html         # 前端页面
-├── codex-threads      # 命令行入口
-├── start.sh           # 启动脚本（macOS）
-├── stop.sh            # 停止脚本（macOS）
-└── README.md
-```
 
 ## License
 

@@ -1,0 +1,9 @@
+{
+  "name": "codex-thread-manager",
+  "version": "1.0.0",
+  "description": "Codex 对话管理工具",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
