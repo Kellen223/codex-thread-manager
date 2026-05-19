@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Codex Thread Manager</title>
+<style>
+:root{color-scheme:light;--bg:#f6f4ef;--panel:#ffffff;--ink:#1c1d1f;--muted:#666f7a;--line:#d9d5ca;--accent:#0f766e;--accent-hover:#0d9488;--accent-ink:#ffffff;--warn:#a16207;--ok:#15803d;--red:#b91c1c;--red-light:#fef2f2;--orange:#d97706;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+[data-theme="dark"]{color-scheme:dark;--bg:#17191c;--panel:#22252a;--ink:#f4f0e8;--muted:#adb5bd;--line:#3a3f45;--accent:#2dd4bf;--accent-hover:#5eead4;--accent-ink:#06211d;--warn:#fbbf24;--ok:#4ade80;--red:#f87171;--red-light:#451a1a;--orange:#fbbf24}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);}
+main{width:100%;max-width:1080px;margin:20px auto}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:24px}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+h1{margin:0 0 8px;font-size:32px;line-height:1.1;letter-spacing:0}
+p{color:var(--muted);margin:0}
+button{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;min-height:40px;padding:0 14px;font-size:14px;cursor:pointer;font-family:inherit}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.primary:hover{background:var(--accent-hover)}
+button.danger{border-color:var(--red);color:var(--red)}
+button.danger:hover{background:var(--red-light)}
+button:disabled{opacity:.4;cursor:default}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:18px}
+h2{font-size:16px;margin:0 0 14px;letter-spacing:0}
+.current{font-size:28px;line-height:1.15;font-weight:700;margin-bottom:8px}
+.muted{color:var(--muted)}
+.status{display:inline-flex;align-items:center;gap:8px;color:var(--ok);font-weight:650}
+.dot{width:9px;height:9px;border-radius:999px;background:var(--ok)}
+.buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.model-button.active{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:700}
+.notice{color:var(--warn);margin-top:12px;font-size:14px}
+code{font-family:var(--mono);font-size:13px}
+.full{grid-column:1/-1}
+.stat-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+.stat-box{flex:1;min-width:120px;padding:14px 16px;background:var(--bg);border-radius:8px;border:1px solid var(--line)}
+.stat-box .l{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.stat-box .v{font-size:22px;font-weight:700;margin-top:2px;color:var(--ink)}
+.stat-box .s{font-size:12px;color:var(--muted);margin-top:2px}
+.sw{position:relative;margin-bottom:16px}
+.sw input{width:100%;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-size:14px;font-family:inherit;outline:none}
+.sw input:focus{border-color:var(--accent)}
+.sw input::placeholder{color:var(--muted)}
+.sw .clr{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;display:none;padding:4px;font-size:15px}
+.sw .clr.s{display:block}
+.space{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:20px}
+.space .r{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+.space .bar{height:5px;background:var(--bg);border-radius:4px;overflow:hidden}
+.space .bar div{height:100%;border-radius:4px;background:var(--accent);transition:width .5s}
+.projects{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.project{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;cursor:pointer;transition:all .15s}
+.project:hover{border-color:var(--accent)}
+.project .name{font-weight:600;word-break:break-all;display:flex;align-items:center;gap:6px}
+.project .meta{display:flex;justify-content:space-between;margin-top:8px;font-size:13px;color:var(--muted)}
+.project .badge{font-size:12px;color:var(--accent);font-weight:600}
+.tl{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.tl-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.tl-h h2{font-size:16px;margin:0}
+.tl-h h2 small{font-weight:400;font-size:13px;color:var(--muted);margin-left:8px}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tab{padding:9px 18px;cursor:pointer;font-size:13px;color:var(--muted);font-weight:600;border-bottom:2px solid transparent;transition:all .12s}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tbar{padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tbar .info{font-size:13px;color:var(--muted);margin-right:auto;display:flex;align-items:center;gap:6px}
+.tbar .info input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+.back{color:var(--accent);cursor:pointer;font-size:13px;margin-bottom:12px;display:inline-flex;align-items:center;gap:4px;font-weight:600}
+.back:hover{opacity:.8}
+.back::before{content:"\2190 "}
+.item{display:flex;align-items:flex-start;padding:12px 18px;border-bottom:1px solid var(--line)}
+.item:last-child{border:none}
+.item:hover{background:rgba(15,118,110,.04)}
+.item .cb{padding-top:2px;margin-right:12px}
+.item .cb input{accent-color:var(--accent);width:15px;height:15px;cursor:pointer}
+.item .body{flex:1;min-width:0}
+.item .title{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .title.s{color:var(--muted)}
+.item .meta{font-size:12px;color:var(--muted);margin-top:3px;display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.item .tag{font-size:11px;padding:1px 7px;border-radius:4px;background:var(--bg);color:var(--muted)}
+.item .pv{font-size:13px;color:var(--muted);margin-top:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.45;max-height:2.9em;border-left:2px solid var(--line);padding-left:10px}
+.item .pv em{font-style:normal;color:var(--ink)}
+.empty{padding:48px;text-align:center;color:var(--muted);font-size:14px}
+.load{padding:64px;text-align:center;color:var(--muted)}
+.load .sp{width:22px;height:22px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin:10px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.3);backdrop-filter:blur(2px);z-index:1000;justify-content:center;align-items:center}
+[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.5)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 12px 40px rgba(0,0,0,.1)}
+.modal h3{font-size:16px;margin:0 0 6px}
+.modal p{font-size:14px;color:var(--muted);margin:0 0 20px;line-height:1.6}
+.modal .btns{display:flex;gap:8px;justify-content:flex-end}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 20px;border-radius:40px;font-size:13px;z-index:2000;opacity:0;transition:opacity .25s;pointer-events:none;font-family:var(--mono)}
+.toast.show{opacity:1}
+table.sz{width:100%;border-collapse:collapse;font-size:13px}
+table.sz td{padding:6px 8px;border-bottom:1px solid var(--line);word-break:break-all}
+table.sz td:last-child{text-align:right;font-family:var(--mono);color:var(--muted)}
+table.sz tr:last-child td{font-weight:600;border:none;padding-top:10px}
+table.sz tr:last-child td:last-child{color:var(--ink)}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+@media(max-width:760px){
+  main{margin:18px auto;width:calc(100vw-20px)}
+  header{flex-direction:column;align-items:stretch;gap:12px}
+  .header-actions{justify-content:flex-start}
+  .grid{grid-template-columns:1fr}
+  .buttons{grid-template-columns:1fr}
+  .current{font-size:22px}
+  .stat-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+<main style="width:100%;max-width:1120px;margin:32px auto;padding:0 50px">
+<header style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-bottom:24px">
+  <div>
+    <h1>对话管理</h1>
+    <p>管理 ~/.codex/state_5.sqlite 中的对话记录</p>
+  </div>
+  <div class="header-actions">
+    <button id="diskBtn">💾 磁盘</button>
+    <button id="themeToggle">深色模式</button>
+    <button id="refreshBtn">刷新</button>
+  </div>
+</header>
+<div id="app"><div class="load"><div class="sp"></div></div></div>
+</main>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal"><h3 id="modalTitle"></h3><p id="modalBody"></p><div class="btns"><button class="btn-sec" id="modalCancel">取消</button><button class="btn-red" id="modalConfirm">确认</button></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Theme ──
+var root = document.documentElement;
+var theme = localStorage.getItem("codex-thread-theme") || "light";
+function setTheme(t){ root.dataset.theme=t; localStorage.setItem("codex-thread-theme",t); renderThemeButton(); }
+function toggleTheme(){ setTheme(root.dataset.theme==="dark"?"light":"dark"); }
+function renderThemeButton(){
+  var btn = document.getElementById("themeToggle");
+  if(btn) btn.textContent = root.dataset.theme==="dark" ? "白天模式" : "深色模式";
+}
+
+// ── Helpers ──
+function $(id){ return document.getElementById(id); }
+function api(p,o){ return fetch(p,{headers:{"Content-Type":"application/json"},...o}).then(function(r){return r.json()}); }
+function ft(ts){ if(!ts) return "-"; var d=new Date(ts*1000); return d.getFullYear()+"年"+(d.getMonth()+1)+"月"+d.getDate()+"日 "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+function fk(n){ if(!n) return "0"; if(n>1073741824) return (n/1073741824).toFixed(1)+"GB"; if(n>1048576) return (n/1048576).toFixed(1)+"MB"; if(n>1024) return (n/1024).toFixed(1)+"KB"; return n+"B"; }
+function fc(p){ if(!p) return ""; var a=p.split("/"); return a[a.length-1]||p; }
+function esc(s){ if(!s) return ""; return String(s).replace(/[&<>"']/g,function(m){ return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]; }); }
+
+// ── Toast & Modal ──
+var toastTimer;
+function toast(m){ var e=$("toast"); e.textContent=m; e.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(function(){ e.classList.remove("show"); },2500); }
+var modalCb=null;
+function showModal(t,b,cb){ $("modalTitle").textContent=t; $("modalBody").innerHTML=b; $("modal").classList.add("show"); modalCb=cb; }
+
+// ── State ──
+var state = { view:"projects", selected:{}, cwd:"", archived:false, search:"", allThreads:[], projects:[] };
+
+function render(){
+  if(state.view==="projects") renderProjects();
+  else renderThreads();
+}
+
+async function renderProjects(){
+  state.projects = await api("/api/projects");
+  var s = await api("/api/stats");
+  
+  var h = '<div class="stat-row">'+
+    '<div class="stat-box"><div class="l">总对话数</div><div class="v">'+s.total+'</div><div class="s">活跃 '+s.active+' / 已归档 '+s.archived+'</div></div>'+
+    '<div class="stat-box"><div class="l">项目数</div><div class="v">'+state.projects.length+'</div><div class="s">按目录分组</div></div>'+
+    '<div class="stat-box"><div class="l">Token 消耗</div><div class="v">'+(s.total_tokens?Math.round(s.total_tokens/1e4)/100+"M":"0")+'</div><div class="s">所有对话累计</div></div>'+
+    '<div class="stat-box"><div class="l">日志大小</div><div class="v" id="logSize">-</div><div class="s">state + logs 数据库</div></div>'+
+    '</div>';
+  
+  h += '<div class="space"><div class="r"><span>💾 <span style="color:var(--accent);font-weight:600">对话</span> / <span style="color:var(--text2)">日志</span></span><span id="diskInfo">计算中...</span></div><div class="bar" style="background:var(--dim);position:relative"><div id="diskBar" style="width:0%;height:100%;background:var(--accent);border-radius:3px"></div></div></div>';
+  
+  h += '<div class="sw"><input type="text" id="si" placeholder="🔍 搜索项目名称..." oninput="onSearch(this.value)"><button class="clr" id="cb" onclick="clrSearch()">✕</button></div>';
+  
+  h += '<div class="projects" id="pl">';
+  for(var i=0;i<state.projects.length;i++){
+    var p = state.projects[i];
+    h += '<div class="project" onclick="openP(\''+esc(p.cwd)+'\')">'+
+      '<div class="name">📂 '+esc(fc(p.cwd))+'</div>'+
+      '<div class="meta"><span>共 '+p.count+' 条对话</span><span class="badge">'+ft(p.last_active)+'</span></div></div>';
+  }
+  h += '</div>';
+  $("app").innerHTML = h;
+  
+  api("/api/log-size").then(function(d){ var e=$("logSize"); if(e) e.textContent = d.size>1048576?Math.round(d.size/1048576)+"MB":Math.round(d.size/1024)+"KB"; }).catch(function(){});
+  calcDisk();
+}
+
+async function calcDisk(){
+  var sz = await api("/api/sizes");
+  var lg = await api("/api/log-size");
+  var total=0; for(var c in sz) total+=sz[c];
+  var all = total + (lg.size||0);
+  var talkPct = Math.min(total/Math.max(all,1)*100,100);
+  var bar=document.getElementById("diskBar"), info=document.getElementById("diskInfo");
+  if(bar) bar.style.width = talkPct+"%";
+  if(info) info.textContent = fk(total)+" / "+fk(lg.size);
+}
+
+function onSearch(v){ state.search=v.toLowerCase(); var c=$("cb"); if(v) c.classList.add("s"); else c.classList.remove("s"); filterP(); }
+function clrSearch(){ $("si").value=""; state.search=""; $("cb").classList.remove("s"); filterP(); }
+function filterP(){
+  var list=$("pl"); if(!list) return;
+  var h="";
+  for(var i=0;i<state.projects.length;i++){
+    var p=state.projects[i], n=fc(p.cwd);
+    if(state.search&&!n.toLowerCase().includes(state.search)&&!p.cwd.toLowerCase().includes(state.search)) continue;
+    h += '<div class="project" onclick="openP(\''+esc(p.cwd)+'\')"><div class="name">📂 '+esc(n)+'</div><div class="meta"><span>共 '+p.count+' 条对话</span><span class="badge">'+ft(p.last_active)+'</span></div></div>';
+  }
+  list.innerHTML = h || '<div class="empty">没有找到匹配的项目</div>';
+}
+
+async function renderThreads(){
+  var t = await api("/api/threads?cwd="+encodeURIComponent(state.cwd)+"&archived="+(state.archived?"1":"0"));
+  state.allThreads = t;
+  var n = fc(state.cwd);
+  
+  var h = '<span class="back" onclick="goBack()">返回项目列表</span>'+
+    '<div class="tl"><div class="tl-h"><h2>'+esc(n)+' <small>'+esc(state.cwd)+'</small></h2>'+
+    '<div style="display:flex;gap:6px">'+
+    '<button class="btn btn-org" style="background:var(--orange);color:#fff;border:none;border-radius:8px;min-height:32px;padding:0 11px;font-size:12px;cursor:pointer" onclick="arcAll()">📦 归档全部</button>'+
+    '<button class="btn btn-red" style="background:var(--red);color:#fff;border:none;border-radius:8px;min-height:32px;padding:0 11px;font-size:12px;cursor:pointer" onclick="delAll()">🗑️ 清空项目</button></div></div>'+
+    '<div class="tabs">'+
+    '<div class="tab'+(state.archived?"":" active")+'" onclick="setA(false)">活跃</div>'+
+    '<div class="tab'+(state.archived?" active":"")+'" onclick="setA(true)">已归档</div></div>'+
+    '<div class="tbar">'+
+    '<span class="info"><input type="checkbox" id="selAllCb" onchange="selAll(this.checked)"> 全选 | 已选 <span id="sc" style="font-weight:500;color:var(--ink)">'+Object.keys(state.selected).length+'</span> 条</span>'+
+    '<button class="btn-pri" style="background:var(--accent);color:var(--accent-ink);border:none;border-radius:8px;min-height:32px;padding:0 11px;font-size:12px;cursor:pointer" onclick="arcSel()">📦 归档</button>'+
+    '<button class="btn-red" style="background:var(--red);color:#fff;border:none;border-radius:8px;min-height:32px;padding:0 11px;font-size:12px;cursor:pointer" onclick="delSel()" id="db"'+(Object.keys(state.selected).length?"":" disabled")+'>🗑️ 删除</button></div>'+
+    '<div class="sw" style="margin:10px 20px 0"><input type="text" id="ts" placeholder="🔍 搜索对话标题或内容..." oninput="filterT(this.value)" style="padding:8px 12px;font-size:12px"></div>'+
+    '<div id="ti">'+renderItems(t)+'</div></div>';
+  $("app").innerHTML = h;
+  updateCount();
+  var allIds = t.map(function(x){ return x.id; });
+  var allSelected = allIds.length>0 && allIds.every(function(id){ return state.selected[id]; });
+  var selAllCb = $("selAllCb");
+  if(selAllCb) selAllCb.checked = allSelected;
+}
+
+function renderItems(tt){
+  if(!tt||!tt.length) return '<div class="empty">'+(state.archived?"暂无已归档对话":"暂无活跃对话")+'</div>';
+  var h="";
+  for(var i=0;i<tt.length;i++){
+    var x=tt[i], ch=state.selected[x.id]?"checked":"", fm=x.first_user_message||"", pv=fm.length>90?fm.slice(0,90)+"…":fm;
+    h += '<div class="item"><div class="cb"><input type="checkbox" '+ch+' onchange="tog(\''+x.id+'\')"></div>'+
+      '<div class="body"><div class="title'+(x.archived?" s":"")+'">'+esc(x.title||"(无标题)")+'</div>'+
+      '<div class="meta"><span>🕐 '+ft(x.created_at)+'</span><span>⚡ '+fk(x.tokens_used)+'</span>'+
+      (x.model?"<span>🤖 "+esc(x.model)+"</span>":"")+"<span>💾 "+fk(x.file_size)+"</span>"+
+      (x.archived?'<span class="tag">已归档</span>':"")+'</div>'+
+      (pv?'<div class="pv"><em>💬</em> '+esc(pv)+'</div>':"")+'</div></div>';
+  }
+  return h;
+}
+
+function filterT(v){ var q=v.toLowerCase(); var f=state.allThreads.filter(function(t){ return (t.title||"").toLowerCase().includes(q)||(t.first_user_message||"").toLowerCase().includes(q); }); $("ti").innerHTML=renderItems(f); }
+
+function openP(p){ state.selected={}; state.cwd=p; state.archived=false; state.view="threads"; render(); }
+function goBack(){ state.selected={}; state.view="projects"; render(); }
+function setA(v){ state.archived=v; state.selected={}; render(); }
+function tog(id){
+  if(state.selected[id]) delete state.selected[id]; else state.selected[id]=true;
+  updateCount();
+  var allIds=state.allThreads.map(function(x){ return x.id; });
+  var allSelected=allIds.length>0&&allIds.every(function(id){ return state.selected[id]; });
+  var cb=$("selAllCb"); if(cb) cb.checked=allSelected;
+}
+function selAll(ch){ for(var i=0;i<state.allThreads.length;i++){ var id=state.allThreads[i].id; if(ch) state.selected[id]=true; else delete state.selected[id]; } updateCount(); var items=$("ti"); if(items){ var cbs=items.querySelectorAll(".cb input"); for(var i=0;i<cbs.length;i++) cbs[i].checked=ch; } }
+function updateCount(){ var c=Object.keys(state.selected).length; var sc=$("sc"); if(sc) sc.textContent=c; var db=$("db"); if(db) db.disabled=c===0; }
+
+function delSel(){ var ids=Object.keys(state.selected); if(!ids.length) return; showModal("删除对话","确定要删除 <strong>"+ids.length+"</strong> 条对话吗？<br>删除后无法恢复。",function(){ api("/api/delete",{method:"POST",body:JSON.stringify({ids:ids})}).then(function(r){ toast("已删除 "+r.deleted+" 条"); state.selected={}; render(); }); }); }
+function delAll(){ showModal("清空项目","确定要清空 <strong>"+esc(fc(state.cwd))+"</strong> 的所有对话吗？<br>清空后无法恢复。",function(){ api("/api/delete-project",{method:"POST",body:JSON.stringify({cwd:state.cwd})}).then(function(r){ toast("已删除 "+r.deleted+" 条"); state.selected={}; r.deleted?goBack():render(); }); }); }
+function arcSel(){ var ids=Object.keys(state.selected); if(!ids.length) return; api("/api/archive",{method:"POST",body:JSON.stringify({ids:ids})}).then(function(r){ toast("已归档 "+r.archived+" 条"); state.selected={}; render(); }); }
+function arcAll(){ showModal("归档对话","确定要归档 <strong>"+esc(fc(state.cwd))+"</strong> 的所有活跃对话吗？",function(){ api("/api/threads?cwd="+encodeURIComponent(state.cwd)+"&archived=0").then(function(t){ var ids=t.map(function(x){ return x.id; }); if(ids.length){ api("/api/archive",{method:"POST",body:JSON.stringify({ids:ids})}).then(function(r){ toast("已归档 "+r.archived+" 条"); render(); }); } else { toast("没有需要归档的对话"); } }); }); }
+
+async function showDisk(){
+  showModal("💾 磁盘占用明细","<p style=\"text-align:center;color:var(--muted);padding:12px\">计算中...</p>",function(){});
+  var confirmBtn = $("modalConfirm");
+  confirmBtn.className = "btn-sec";
+  confirmBtn.textContent = "关闭";
+  confirmBtn.style.cssText = "border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;min-height:40px;padding:0 14px;font-size:14px;cursor:pointer";
+  var sz = await api("/api/sizes");
+  var html='<table class="sz">', total=0;
+  for(var d in sz){ total+=sz[d]; html+='<tr><td>📁 '+esc(fc(d))+'</td><td>'+fk(sz[d])+'</td></tr>'; }
+  html+='<tr><td><strong>合计</strong></td><td>'+fk(total)+'</td></tr></table>';
+  $("modalBody").innerHTML = html;
+}
+
+// ── Event Listeners ──
+document.getElementById("modalCancel").onclick = function(){ document.getElementById("modal").classList.remove("show"); };
+document.getElementById("modalConfirm").onclick = function(){ document.getElementById("modal").classList.remove("show"); if(typeof modalCb==="function"){ modalCb(); modalCb=null; } };
+
+setTheme(theme);
+document.getElementById("themeToggle").onclick = toggleTheme;
+document.getElementById("diskBtn").onclick = showDisk;
+document.getElementById("refreshBtn").onclick = function(){ location.reload(); };
+render();
+</script>
+</body>
+</html>
