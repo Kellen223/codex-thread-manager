@@ -1,38 +1,58 @@
 # Codex Thread Manager
 
-> 一个本地的、零依赖的 Codex Thread Manager工具。浏览、搜索、批量清理按项目组织的 Codex 会话记录。
+> 一个本地的、零依赖的 Codex 对话管理工具。  
+> 浏览、搜索、批量清理按项目组织的 Codex 对话记录。
 
-![screenshot](./screenshot.png)
+---
 
-## 为什么做
+## 安装
 
-Codex 桌面端没有提供按项目查看和批量管理对话的能力。对话记录积少成多，既占磁盘又难以检索。这个工具给你一个网页界面，像文件管理器一样管理你的对话。
+### 方式一：通过 Codex 安装（推荐）
 
-## 快速开始
+直接把下面这个链接发给 Codex，它会自动完成剩下的：
+
+```
+https://github.com/Kellen223/codex-thread-manager
+```
+
+### 方式二：手动安装
 
 ```bash
-git clone https://github.com/YOUR_USER/codex-threads.git
-cd codex-threads
+git clone https://github.com/Kellen223/codex-thread-manager.git
+cd codex-thread-manager
+```
 
-# 启动（需要 Codex 桌面环境，使用内置 Node.js）
+## 使用
+
+### macOS（Codex 桌面环境）
+
+```bash
+# 启动
 ./codex-threads start
 
 # 打开浏览器
 open http://127.0.0.1:8964
+
+# 停止
+./codex-threads stop
+
+# 查看状态
+./codex-threads status
 ```
 
-### 命令
+### Windows / 其他环境
 
-| 命令 | 说明 |
-|---|---|
-| `./codex-threads start` | 启动服务（后台运行） |
-| `./codex-threads stop` | 停止服务 |
-| `./codex-threads status` | 查看运行状态 |
+需要先安装 Node.js（[下载](https://nodejs.org/)），然后：
+
+```bash
+node server.js
+```
+
+然后浏览器打开 `http://127.0.0.1:8964`。
 
 ### 开机自启（macOS）
 
 ```bash
-# 复制 plist 到 LaunchAgents
 cp com.codex.threads.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.codex.threads.plist
 ```
@@ -44,7 +64,7 @@ launchctl load ~/Library/LaunchAgents/com.codex.threads.plist
 - 批量选择、删除、归档对话
 - 磁盘占用可视化（对话文件 vs 日志库）
 - 深色 / 浅色主题
-- 轻量零依赖，不装任何包
+- 零外部依赖
 
 ## 技术实现
 
@@ -54,21 +74,19 @@ launchctl load ~/Library/LaunchAgents/com.codex.threads.plist
 
 | 层 | 技术 |
 |---|---|
-| 后端 | Node.js（Codex 内置） |
+| 后端 | Node.js |
 | 数据库查询 | 系统 `sqlite3 -json` CLI |
 | 前端 | 单页 HTML + CSS + JS，无框架 |
 | 外部依赖 | **零** |
-
-一条命令都没有装——全靠系统和 Codex 自带的工具。
 
 ## 项目文件
 
 ```
 ├── server.js          # HTTP 服务
-├── index.html         # 前端页面（全部内嵌）
+├── index.html         # 前端页面
 ├── codex-threads      # 命令行入口
-├── start.sh           # 启动脚本
-├── stop.sh            # 停止脚本
+├── start.sh           # 启动脚本（macOS）
+├── stop.sh            # 停止脚本（macOS）
 └── README.md
 ```
 

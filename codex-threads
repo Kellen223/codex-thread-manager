@@ -1,33 +1,57 @@
-#!/bin/bash
+#!/bin/sh
 DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# Find Node.js: try Codex bundled, then system
+# Find Node.js
+NODE=""
 if [ -f "/Applications/Codex.app/Contents/Resources/node" ]; then
   NODE="/Applications/Codex.app/Contents/Resources/node"
 elif command -v node &>/dev/null; then
   NODE="node"
+elif [ -f "/Program Files/nodejs/node.exe" ]; then
+  NODE="/Program Files/nodejs/node.exe"
+elif command -v node.exe &>/dev/null; then
+  NODE="node.exe"
 else
-  echo "Error: Node.js not found. Install Node.js or run inside Codex."
+  echo "Error: Node.js not found. Install from https://nodejs.org"
   exit 1
 fi
+
+PID_FILE="$DIR/.threads.pid"
 
 case "${1:-start}" in
   start)
     $NODE -e "
-const { spawn } = require('child_process');
-const p = spawn('$NODE', ['$DIR/server.js'], {
-  detached: true, stdio: 'ignore', env: { ...process.env }
-});
+const{spawn}=require('child_process');
+const p=spawn('$NODE',['$DIR/server.js'],{detached:true,stdio:'ignore',env:{...process.env}});
 p.unref();
-" && echo "✅ Codex Thread Manager started at http://127.0.0.1:8964"
+console.log(p.pid);
+" > "$PID_FILE" 2>/dev/null
+    echo "✅ Started at http://127.0.0.1:8964"
     ;;
   stop)
-    lsof -ti :8964 | xargs kill 2>/dev/null && echo "🛑 Stopped" || echo "Not running"
+    if [ -f "$PID_FILE" ]; then
+      kill "$(cat "$PID_FILE")" 2>/dev/null
+      rm -f "$PID_FILE"
+      echo "🛑 Stopped"
+    else
+      # fallback: try lsof (macOS) or netstat (Windows)
+      if command -v lsof &>/dev/null; then
+        PID=$(lsof -ti :8964 2>/dev/null)
+        [ -n "$PID" ] && kill "$PID" 2>/dev/null && echo "🛑 Stopped" || echo "Not running"
+      elif command -v netstat &>/dev/null; then
+        echo "Use Task Manager to stop the Node process on port 8964"
+      else
+        echo "Not running"
+      fi
+    fi
     ;;
   status)
-    PID=$(lsof -ti :8964 2>/dev/null)
-    if [ "$PID" ]; then echo "✅ Running (PID: $PID) → http://127.0.0.1:8964"
-    else echo "❌ Not running"; fi
+    if command -v lsof &>/dev/null; then
+      PID=$(lsof -ti :8964 2>/dev/null)
+      [ -n "$PID" ] && echo "✅ Running (PID: $PID) → http://127.0.0.1:8964" || echo "❌ Not running"
+    else
+      [ -f "$PID_FILE" ] && echo "✅ Running (PID: $(cat "$PID_FILE"))" || echo "❌ Not running"
+    fi
     ;;
   *)
     echo "Usage: ./codex-threads {start|stop|status}"
